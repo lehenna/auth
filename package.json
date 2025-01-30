@@ -1,7 +1,7 @@
 {
   "name": "@lehenna/auth",
   "description": "Implement a user authentication system in minutes.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
