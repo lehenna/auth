@@ -66,7 +66,7 @@ const verificationCodeModel: VerificationCodeModel<string> = {
   },
 };
 
-const sessionModel: SessionModel<string, User> = {
+const sessionModel: SessionModel<string, User, Session> = {
   async create(data) {
     const newSession = {
       id: nanoid(),
@@ -87,7 +87,7 @@ const sessionModel: SessionModel<string, User> = {
 
 let inputCode: string;
 
-const client = new Client<string, User>(
+const client = new Client<string, User, Session>(
   {
     user: userModel,
     verificationCode: verificationCodeModel,

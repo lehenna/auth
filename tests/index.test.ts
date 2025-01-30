@@ -8,7 +8,8 @@ test("sendVerificationCode", async () => {
 test("validateVerificationCode", async () => {
   const session = await client.validateVerificationCode(
     testUser.email,
-    inputCode
+    inputCode,
+    {}
   );
   expect(session.user.id === testUser.id);
 });

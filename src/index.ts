@@ -18,9 +18,13 @@ export interface Session<Id, TUser extends User<Id>> {
   user: TUser;
 }
 
-export interface SessionModel<Id, TUser extends User<Id>> {
-  findById: (id: Id) => Promise<Session<Id, TUser> | null>;
-  create: (data: Omit<Session<Id, TUser>, "id">) => Promise<Session<Id, TUser>>;
+export interface SessionModel<
+  Id,
+  TUser extends User<Id>,
+  TSession extends Session<Id, TUser>
+> {
+  findById: (id: Id) => Promise<TSession | null>;
+  create: (data: Omit<TSession, "id">) => Promise<TSession>;
   remove: (id: Id) => Promise<void>;
 }
 
@@ -46,10 +50,14 @@ export class AuthError extends Error {
   }
 }
 
-export interface ClientModels<Id, TUser extends User<Id>> {
+export interface ClientModels<
+  Id,
+  TUser extends User<Id>,
+  TSession extends Session<Id, TUser>
+> {
   verificationCode: VerificationCodeModel<Id>;
   user: UserModel<Id, TUser>;
-  session: SessionModel<Id, TUser>;
+  session: SessionModel<Id, TUser, TSession>;
 }
 
 export type MailerFunction<Id, TUser extends User<Id>> = (
@@ -64,15 +72,19 @@ export interface ClientOptions<Id, TUser extends User<Id>> {
   mailer: MailerFunction<Id, TUser>;
 }
 
-export class Client<Id, TUser extends User<Id>> {
-  private models: ClientModels<Id, TUser>;
+export class Client<
+  Id,
+  TUser extends User<Id>,
+  TSession extends Session<Id, TUser>
+> {
+  private models: ClientModels<Id, TUser, TSession>;
   private ncrypt: Ncrypt;
   private sessionExpiresIn: number;
   private codeExpiresIn: number;
   private mailer: MailerFunction<Id, TUser>;
 
   constructor(
-    models: ClientModels<Id, TUser>,
+    models: ClientModels<Id, TUser, TSession>,
     options: ClientOptions<Id, TUser>
   ) {
     this.models = models;
@@ -126,7 +138,11 @@ export class Client<Id, TUser extends User<Id>> {
     return user;
   }
 
-  async validateVerificationCode(email: string, inputCode: string) {
+  async validateVerificationCode(
+    email: string,
+    inputCode: string,
+    sessionOptions: Omit<Omit<Omit<TSession, "id">, "expiresIn">, "user">
+  ) {
     const user = await this.models.user.findByEmail(email);
     if (!user) throw new AuthError("User not found.");
     const userCode = await this.models.verificationCode.findByUserId(user.id);
@@ -142,7 +158,8 @@ export class Client<Id, TUser extends User<Id>> {
     const session = await this.models.session.create({
       user,
       expiresIn: Date.now() + this.sessionExpiresIn,
-    });
+      ...sessionOptions,
+    } as TSession);
     return session;
   }
 
